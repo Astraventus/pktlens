@@ -1,5 +1,5 @@
 #include "pktlens/dissectors/DissectorRegistry.h"
-#include "pktlens/dissectors//EthernetDissector.h"
+#include "pktlens/dissectors/EthernetDissector.h"
 
 namespace pktlens {
 

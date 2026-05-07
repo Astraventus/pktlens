@@ -1,4 +1,4 @@
-#include "../include/pktlens/capture/PcapFileProvider.h"
+#include "pktlens/capture/PcapFileProvider.h"
 
 namespace pktlens {
 
@@ -26,7 +26,7 @@ namespace pktlens {
         }
 
         struct pcap_pkthdr* header = nullptr;
-        uint8_t* data = nullptr;
+        const u_char* data = nullptr;
 
         int result = pcap_next_ex(handle_, &header, &data);
 
@@ -34,7 +34,7 @@ namespace pktlens {
             return false;
         }
 
-        out.data = data;
+        out.data = reinterpret_cast<const uint8_t*>(data);
         out.caplen = header->caplen;
         out.origlen = header->len;
         out.timestamp = static_cast<double>(header->ts.tv_sec) + static_cast<double>(header->ts.tv_usec) * 1e-6;

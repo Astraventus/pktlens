@@ -7,7 +7,7 @@ namespace pktlens {
 
     struct RawPacket
     {
-        uint8_t* data;
+        const uint8_t* data;
         uint32_t caplen;
         uint32_t origlen;
         double timestamp;

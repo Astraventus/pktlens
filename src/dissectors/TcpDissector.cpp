@@ -1,8 +1,7 @@
-#include "../include/pktlens/dissectors/TcpDissector.h"
-#include "../include/pktlens/model/ProtocolTree.h"
+#include "pktlens/dissectors/TcpDissector.h"
+#include "pktlens/model/ProtocolTree.h"
 #include <arpa/inet.h>  // ntohs, ntohl
 #include <cstdio>
-#include <string.h>
 #include <cstring>
 
 namespace pktlens {

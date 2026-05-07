@@ -1,4 +1,3 @@
-#include "pktlens/dissectors/DissectorRegistry.h"
 #include "pktlens/dissectors/IPv4Dissector.h"
 #include "pktlens/model/ProtocolTree.h"
 #include <arpa/inet.h>
@@ -67,6 +66,7 @@ namespace pktlens {
                 pkt.top_proto = ProtoId::Unknown;
                 break;
 
-        } 
+        }
+        return true;
     }
 }
