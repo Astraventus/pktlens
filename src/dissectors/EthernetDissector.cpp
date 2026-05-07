@@ -1,6 +1,6 @@
-#include "DissectorRegistry.h"
-#include "IPv4Dissector.h"
-#include "ProtocolTree.h"
+#include "pktlens/dissectors/DissectorRegistry.h"
+#include "pktlens/dissectors/IPv4Dissector.h"
+#include "pktlens/model/ProtocolTree.h"
 #include <arpa/inet.h>
 #include <cstdio>
 

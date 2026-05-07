@@ -14,6 +14,10 @@ pkg_check_modules(PCAP REQUIRED libpcap)
 # Main library
 add_library(pktlens_engine 
     src/capture/PcapFileProvider.cpp
+    src/dissectors/DissectorRegistry.cpp
+    src/dissectors/EthernetDissector.cpp
+    src/dissectors/IPv4Dissector.cpp
+    src/dissectors/TcpDissector.cpp
 )
 
 target_include_directories(pktlens_engine PUBLIC

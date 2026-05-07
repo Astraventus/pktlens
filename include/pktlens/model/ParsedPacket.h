@@ -19,7 +19,7 @@ namespace pktlens {
         uint32_t length_orig; // wire length
         uint32_t length_cap;  // captured length
         ProtoId top_proto;    // highest recognised protocol
-        uint8_t top_flags; // TCP flags byte, 0 if not tcp
+        uint8_t tcp_flags; // TCP flags byte, 0 if not tcp
     };
 }
 
