@@ -1,5 +1,5 @@
 #include "pktlens/capture/PcapFileProvider.h"
-#include "pktlens/dissectors/DissectorRegistry.h"
+#include "pktlens/model/PacketStore.h"
 #include <cstdio>
 
 int main(int argc, char* argv[]) {
@@ -15,28 +15,40 @@ int main(int argc, char* argv[]) {
     }
 
     pktlens::DissectorContext ctx;
-    pktlens::RawPacket        raw;
-    size_t                     count = 0;
+    pktlens::PacketStore      store;
 
-    while (provider.next_packet(raw)) {
-        pktlens::ParsedPacket pkt;
-        pktlens::ProtocolTree tree;
+    size_t n = store.load(provider, ctx);
+    std::printf("loaded: %zu packets\n", n);
 
-        pktlens::dissect(raw, pkt, tree, ctx);
-        ++count;
-
-        if (count <= 5) {
-            std::printf("pkt %zu: proto=%-4s  src=%08x:%u  dst=%08x:%u  "
-                        "cap=%u orig=%u  flags=%02x\n",
-                        count,
-                        pktlens::proto_name(pkt.top_proto),
-                        pkt.src_ip,   pkt.src_port,
-                        pkt.dst_ip,   pkt.dst_port,
-                        pkt.length_cap, pkt.length_orig,
-                        pkt.tcp_flags);
-        }
+    // Print first 5 in default (time) order
+    std::printf("\n--- default order (time asc) ---\n");
+    size_t limit = std::min(n, size_t(6));
+    for (size_t i = 0; i < limit; ++i) {
+        const pktlens::ParsedPacket& p = store.packet_at(i);
+        std::printf("  [%zu] proto=%-4s  ts=%.6f  len=%u\n",
+                    i,
+                    pktlens::proto_name(p.top_proto),
+                    p.timestamp,
+                    p.length_orig);
     }
 
-    std::printf("total: %zu packets\n", count);
+    // Sort by size descending, print top 5 largest
+    store.sort(pktlens::SortField::Size, pktlens::SortDirection::Descending);
+    std::printf("\n--- top 5 by size (desc) ---\n");
+    for (size_t i = 0; i < limit; ++i) {
+        const pktlens::ParsedPacket& p = store.packet_at(i);
+        std::printf("  [%zu] proto=%-4s  len=%u\n",
+                    i,
+                    pktlens::proto_name(p.top_proto),
+                    p.length_orig);
+    }
+
+    // Filter to TCP only, print count
+    store.apply_filter([](const pktlens::ParsedPacket& p) {
+        return p.top_proto == pktlens::ProtoId::TCP;
+    });
+    std::printf("\n--- filter: TCP only ---\n");
+    std::printf("  %zu packets match\n", store.view_count());
+
     return 0;
 }

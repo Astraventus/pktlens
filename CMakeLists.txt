@@ -18,6 +18,7 @@ add_library(pktlens_engine
     src/dissectors/EthernetDissector.cpp
     src/dissectors/IPv4Dissector.cpp
     src/dissectors/TcpDissector.cpp
+    src/model/PacketStore.cpp
 )
 
 target_include_directories(pktlens_engine PUBLIC
