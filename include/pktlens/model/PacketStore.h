@@ -1,5 +1,5 @@
-#ifndef NETSCOPE_PACKETSTORE_H
-#define NETSCOPE_PACKETSTORE_H
+#ifndef PKTLENS_PACKETSTORE_H
+#define PKTLENS_PACKETSTORE_H
 
 #include "ParsedPacket.h"
 #include "ProtocolTree.h"
