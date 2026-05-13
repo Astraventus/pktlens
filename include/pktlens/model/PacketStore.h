@@ -77,8 +77,11 @@ namespace pktlens {
         SortDirection current_sort_dir() const { return sort_dir_; }
 
         std::string error_message() const { return error_; }
-    };
 
+        void load_from_vector(std::vector<ParsedPacket> packets);
+
+        const ParsedPacket& packet_at_raw(size_t raw_index) const;
+    };
 }
 
 #endif

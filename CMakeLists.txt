@@ -20,6 +20,7 @@ add_library(pktlens_engine
     src/dissectors/TcpDissector.cpp
     src/model/PacketStore.cpp
     src/filter/FilterParser.cpp
+    src/session/SessionModel.cpp
 )
 
 target_include_directories(pktlens_engine PUBLIC

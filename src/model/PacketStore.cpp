@@ -87,4 +87,15 @@ namespace pktlens {
             view_[i] = i;
         }
     }
+
+    void PacketStore::load_from_vector(std::vector<ParsedPacket> packets) {
+        packets_ = std::move(packets);
+        error_.clear();
+        reset_view();
+        sort(sort_field_, sort_dir_);
+    }
+
+    const ParsedPacket& PacketStore::packet_at_raw(size_t raw_index) const {
+        return packets_[raw_index];
+    }
 }
