@@ -63,3 +63,12 @@ target_link_libraries(pktlens PRIVATE pktlens_ui)
 # Test reader
 add_executable(pktlens_test_reader src/main_test_reader.cpp)
 target_link_libraries(pktlens_test_reader PRIVATE pktlens_engine)
+
+# static target
+add_executable(pktlens_static src/main.cpp)
+target_link_libraries(pktlens_static PRIVATE pktlens_ui)
+target_link_options(pktlens_static PRIVATE
+    -static
+    -static-libgcc
+    -static-libstdc++
+)

@@ -56,7 +56,7 @@ namespace pktlens {
 
     void TerminalGuard::setup_colors() {
         // -1 = terminal default background (transparent)
-        init_pair(colors::HEADER_BAR,  COLOR_BLACK,  COLOR_CYAN);
+        init_pair(colors::HEADER_BAR,  COLOR_WHITE,  COLOR_CYAN);
         init_pair(colors::STATUS_BAR,  COLOR_BLACK,  COLOR_WHITE);
         init_pair(colors::SELECTED,    COLOR_BLACK,  COLOR_WHITE);
         init_pair(colors::PROTO_TCP,   COLOR_CYAN,   -1);
