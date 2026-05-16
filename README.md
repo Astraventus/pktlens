@@ -16,6 +16,8 @@
 - **Terminal resize** — live SIGWINCH handling, layout reflows automatically
 - **No runtime dependencies** — static binary available, drops onto any Linux system
 
+**P.S: As for now - the only implemented protocols are Ethernet, IPv4, TCP/UDP!**
+
 ## Installation
  
 ### Pre-built binary (recommended)
