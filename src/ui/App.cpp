@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <csignal>
 
-extern volatile sig_atomic_t g_terminal_resized = 0;
+extern volatile sig_atomic_t g_terminal_resized;
 
 namespace pktlens
 {
@@ -63,6 +63,7 @@ namespace pktlens
                 refresh();
                 clear();
                 layout();
+                render_all();
             }
 
             handle_key(ch);

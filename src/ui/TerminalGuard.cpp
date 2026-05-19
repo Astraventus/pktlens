@@ -4,10 +4,9 @@
 #include <csignal>
 #include <cstdlib>
 
-namespace pktlens {
+volatile sig_atomic_t g_terminal_resized = 0;
 
-    // Global flag set by SIGWINCH — checked in the main loop
-    volatile sig_atomic_t g_terminal_resized = 0;
+namespace pktlens {
 
     static void signal_handler(int sig) {
         if (sig == SIGWINCH) {
