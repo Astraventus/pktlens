@@ -22,7 +22,7 @@
  
 ### Pre-built binary (recommended)
  
-Download the latest release for your platform from the [releases page](https://github.com/yourname/pktlens/releases):
+Download the latest release for your platform from the './releases' folder in repo:
  
 | Platform         | Binary              |
 |------------------|---------------------|
