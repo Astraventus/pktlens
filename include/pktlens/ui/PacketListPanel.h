@@ -40,6 +40,7 @@ namespace pktlens
         int  color_for_proto(ProtoId proto) const;
 
         static std::string fmt_ip(uint32_t ip_nbo);
+        static std::string fmt_addr(const ParsedPacket& pkt, bool src);
     };
 
 }  // namespace pktlens

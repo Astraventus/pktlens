@@ -17,7 +17,7 @@
 - **Terminal resize** — live SIGWINCH handling, layout reflows automatically
 - **No runtime dependencies** — static binary available, drops onto any Linux system
 
-> **Protocol support:** Ethernet, IPv4, TCP, UDP. ICMP, ARP, DNS, and HTTP are recognised and colour-coded but not yet fully decoded.
+> **Protocol support:** Full dissection for Ethernet, VLAN (802.1Q), MPLS, IPv4, IPv6 (including extension headers), TCP, UDP, ICMP, ICMPv6, ARP, DNS (queries, responses, A/AAAA records), DHCP (options, message types), HTTP (request/response lines, headers), TLS/HTTPS (record layer, handshake, SNI extraction), SSH (version string, key exchange), FTP, SMTP, NTP.
 
 ---
 
@@ -127,7 +127,10 @@ Filters are evaluated against every packet in the current view. The syntax is th
 ```
 expr   :=  term  ( ('and' | 'or')  term )*
 term   :=  'not' term  |  '(' expr ')'  |  atom
-atom   :=  tcp | udp | dns | http | icmp | arp
+atom   :=  tcp | udp | dns | http | https | tls
+        |  icmp | icmpv6 | arp | ipv6
+        |  ssh | ftp | smtp | ntp | dhcp
+        |  vlan | mpls
         |  ip <addr>  |  src <addr>  |  dst <addr>
         |  port <n>
         |  len > <n>  |  len < <n>  |  len = <n>

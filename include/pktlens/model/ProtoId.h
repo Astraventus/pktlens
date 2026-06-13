@@ -6,43 +6,59 @@
 
 namespace pktlens {
 
-    // Enum of all supported protocols
     enum ProtoId : uint8_t {
         Unknown = 0,
-        Ethernet, 
+        Ethernet,
+        VLAN,       // 802.1Q
+        MPLS,
         ARP,
         IPv4,
         IPv6,
         TCP,
         UDP,
         ICMP,
-        HTTP,
+        ICMPv6,
         DNS,
+        DHCP,
+        HTTP,
+        HTTPS,      // TLS on 443
+        TLS,        // TLS on other ports
+        SSH,
+        FTP,
+        SMTP,
+        NTP,
         _Count
     };
 
-    // Function returns the count of ProtoId enum
     inline constexpr size_t proto_count() {
         return static_cast<size_t>(ProtoId::_Count);
     }
 
-    // Function that returns text representation of id for display
     inline const char* proto_name(ProtoId id) {
-
-        const char* names[] = {
+        static const char* names[] = {
             "???",      // Unknown
             "Ethernet",
+            "VLAN",
+            "MPLS",
             "ARP",
             "IPv4",
             "IPv6",
             "TCP",
             "UDP",
             "ICMP",
-            "HTTP",
+            "ICMPv6",
             "DNS",
+            "DHCP",
+            "HTTP",
+            "HTTPS",
+            "TLS",
+            "SSH",
+            "FTP",
+            "SMTP",
+            "NTP",
         };
 
-        static_assert((sizeof(names)/sizeof(names[0])) == static_cast<size_t>(ProtoId::_Count), 
+        static_assert((sizeof(names)/sizeof(names[0])) == static_cast<size_t>(ProtoId::_Count),
             "proto_name array out of sync with ProtoId enum");
 
         size_t idx = static_cast<size_t>(id);

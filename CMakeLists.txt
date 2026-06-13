@@ -21,8 +21,13 @@ add_library(pktlens_engine
     src/capture/CaptureThread.cpp     
     src/dissectors/DissectorRegistry.cpp
     src/dissectors/EthernetDissector.cpp
+    src/dissectors/ArpDissector.cpp
     src/dissectors/IPv4Dissector.cpp
+    src/dissectors/IPv6Dissector.cpp
+    src/dissectors/IcmpDissector.cpp
     src/dissectors/TcpDissector.cpp
+    src/dissectors/UdpDissector.cpp
+    src/dissectors/AppDissectors.cpp
     src/model/PacketStore.cpp
     src/filter/FilterParser.cpp
     src/session/SessionModel.cpp
