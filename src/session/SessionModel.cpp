@@ -1,20 +1,22 @@
 #include "pktlens/session/SessionModel.h"
+#include "pktlens/capture/PcapWriter.h"
 #include "pktlens/filter/FilterParser.h"
 #include <cstring>
+#include <sys/stat.h>  // stat()
 
 namespace pktlens {
 
-    SessionModel::SessionModel() : selected_index_(0), loaded_(false) {}
+    SessionModel::SessionModel()
+        : selected_index_(0)
+        , loaded_(false)
+        , last_polled_count_(0)
+    {}
 
     bool SessionModel::load(PacketProvider &provider)
     {
         loaded_ = false;
         error_.clear();
         raw_bytes_.clear();
-
-        // We shall intercept each raw pcket during loading to store it's bytes.
-        // We can't hook packetstore::load() in here. So we have to duplicate
-        // manual loading here.
 
         RawPacket raw;
         std::vector<ParsedPacket> packets;
@@ -23,20 +25,16 @@ namespace pktlens {
 
         while (provider.next_packet(raw))
         {
-            // Copy raw bytes before dissecting —
-            // raw.data is only valid until the next next_packet() call
             raw_bytes_.push_back(std::vector<uint8_t>(raw.data,
                                                       raw.data + raw.caplen));
-
             ParsedPacket pkt;
-            ProtocolTree tree; // discarded
+            ProtocolTree tree;
             dissect(raw, pkt, tree, ctx_);
             packets.push_back(pkt);
         }
 
         if (packets.empty())
         {
-            // Empty file is not an error — just nothing to show
             loaded_ = true;
             return true;
         }
@@ -48,6 +46,7 @@ namespace pktlens {
             select(0);
         }
 
+        last_polled_count_ = store_.packet_count();
         loaded_ = true;
         return true;
     }
@@ -101,7 +100,6 @@ namespace pktlens {
         if (!result.ok())
         {
             filter_error_ = result.error;
-            // Leave previous filter intact — don't clear on bad input
             return false;
         }
 
@@ -119,7 +117,6 @@ namespace pktlens {
         filter_error_.clear();
         store_.clear_filter();
 
-        // Re-select: clamp to new view bounds
         if (store_.view_count() > 0)
         {
             if (selected_index_ >= store_.view_count())
@@ -146,15 +143,9 @@ namespace pktlens {
 
         switch (current)
         {
-        case SortField::Time:
-            next = SortField::Size;
-            break;
-        case SortField::Size:
-            next = SortField::Protocol;
-            break;
-        case SortField::Protocol:
-            next = SortField::Time;
-            break;
+        case SortField::Time:     next = SortField::Size;     break;
+        case SortField::Size:     next = SortField::Protocol; break;
+        case SortField::Protocol: next = SortField::Time;     break;
         }
 
         set_sort(next, store_.current_sort_dir());
@@ -192,11 +183,10 @@ namespace pktlens {
 
         const std::vector<uint8_t> &bytes = raw_bytes_[raw_index];
 
-        // Reconstruct a RawPacket pointing into our stored bytes
         RawPacket raw;
-        raw.data = bytes.data();
-        raw.caplen = static_cast<uint32_t>(bytes.size());
-        raw.origlen = store_.packet_at_raw(raw_index).length_orig;
+        raw.data      = bytes.data();
+        raw.caplen    = static_cast<uint32_t>(bytes.size());
+        raw.origlen   = store_.packet_at_raw(raw_index).length_orig;
         raw.timestamp = store_.packet_at_raw(raw_index).timestamp;
 
         ParsedPacket throwaway;
@@ -211,12 +201,10 @@ namespace pktlens {
             return;
         }
 
-        // Capture raw pointer for lambda — unique_ptr can't be captured by value
         const FilterNode *node = filter_node_.get();
         store_.apply_filter([node](const ParsedPacket &pkt)
                             { return node->evaluate(pkt); });
 
-        // Clamp selection to new view
         if (store_.view_count() > 0)
         {
             if (selected_index_ >= store_.view_count())
@@ -228,7 +216,80 @@ namespace pktlens {
         else
         {
             selected_index_ = 0;
-            selected_tree_ = ProtocolTree{};
+            selected_tree_  = ProtocolTree{};
         }
     }
-}
+
+    // -------------------------------------------------------------------------
+    // Export (Step 2)
+    // -------------------------------------------------------------------------
+
+    bool SessionModel::export_to_pcap(const std::string& path)
+    {
+        error_.clear();
+
+        PcapWriter writer(path);
+        if (!writer.is_open()) {
+            error_ = writer.error_message();
+            return false;
+        }
+
+        for (size_t i = 0; i < store_.view_count(); ++i) {
+            size_t raw_idx                    = store_.raw_index_at(i);
+            const ParsedPacket&         pkt   = store_.packet_at_raw(raw_idx);
+            const std::vector<uint8_t>& bytes = raw_bytes_[raw_idx];
+
+            if (!writer.write_packet(bytes, pkt.timestamp, pkt.length_orig)) {
+                error_ = writer.error_message();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // static
+    bool SessionModel::file_exists(const std::string& path)
+    {
+        struct stat st;
+        return ::stat(path.c_str(), &st) == 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // Live capture (Step 6)
+    // -------------------------------------------------------------------------
+
+    // Called by CaptureThread while holding the mutex.
+    void SessionModel::append_packet(ParsedPacket pkt,
+                                     std::vector<uint8_t> raw_bytes)
+    {
+        // raw_bytes_ and the store must stay in sync: push to raw_bytes_ first
+        // so the index PacketStore will compute (packets_.size() before push)
+        // matches the index we'll use in raw_bytes_.
+        raw_bytes_.push_back(std::move(raw_bytes));
+
+        // Build a trivial predicate: pass through if no filter, or evaluate.
+        // The lambda captures filter_node_ by raw pointer (safe — the capture
+        // thread holds the mutex, so apply_filter/clear_filter can't run).
+        const FilterNode* node = filter_node_.get();
+        if (node) {
+            store_.append(std::move(pkt),
+                          [node](const ParsedPacket& p) {
+                              return node->evaluate(p);
+                          });
+        } else {
+            store_.append(std::move(pkt),
+                          [](const ParsedPacket&) { return true; });
+        }
+    }
+
+    // Called by the UI thread on each getch() timeout iteration.
+    size_t SessionModel::poll_new_packets()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        size_t current = store_.packet_count();
+        last_polled_count_ = current;
+        return current;
+    }
+
+}  // namespace pktlens

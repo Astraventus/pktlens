@@ -16,6 +16,9 @@ pkg_check_modules(NCURSES REQUIRED ncurses)
 # Main library - engine (no UI dependencies)
 add_library(pktlens_engine 
     src/capture/PcapFileProvider.cpp
+    src/capture/PcapWriter.cpp
+    src/capture/LiveCaptureProvider.cpp
+    src/capture/CaptureThread.cpp     
     src/dissectors/DissectorRegistry.cpp
     src/dissectors/EthernetDissector.cpp
     src/dissectors/IPv4Dissector.cpp
@@ -42,6 +45,7 @@ add_library(pktlens_ui
     src/ui/PacketListPanel.cpp
     src/ui/DetailPanel.cpp
     src/ui/FilterBar.cpp
+    src/ui/ExportBar.cpp
     src/ui/App.cpp
 )
 

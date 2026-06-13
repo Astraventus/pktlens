@@ -14,7 +14,7 @@ namespace pktlens {
     {}
 
     std::string PacketListPanel::fmt_ip(uint32_t ip_nbo) {
-        if (ip_nbo == 0) { return "—"; }
+        if (ip_nbo == 0) { return "\xe2\x80\x94"; }  // em-dash
         struct in_addr addr;
         addr.s_addr = ip_nbo;
         char buf[INET_ADDRSTRLEN];
@@ -46,11 +46,10 @@ namespace pktlens {
                     " %-6s %-12s %-18s %-18s %-6s %s",
                     "#", "Time", "Source", "Destination", "Proto", "Len");
         win_->print(0, 0, header, A_BOLD | COLOR_PAIR(colors::HEADER_BAR));
-        win_->draw_hline(0, 0, ' ', w);  // fill rest of header row
-        // Re-print after hline (hline overwrites)
+        win_->draw_hline(0, 0, ' ', w);
         win_->print(0, 0, header, A_BOLD | COLOR_PAIR(colors::HEADER_BAR));
 
-        int visible_rows = h - 1;  // minus header row
+        int visible_rows = h - 1;
         size_t total     = model_.filtered_count();
         size_t sel       = model_.selected_index();
 
@@ -63,71 +62,44 @@ namespace pktlens {
             const ParsedPacket& pkt = model_.packet_at(idx);
             bool is_selected        = (idx == sel);
 
-            // --- Truncate each field to its column width ---
-            
-            // # column (width 6)
             std::string idx_str = std::to_string(idx + 1);
-            if (idx_str.size() > 6) {
-                idx_str = idx_str.substr(0, 6);
-            }
-            
-            // Timestamp column (width 12)
+            if (idx_str.size() > 6) { idx_str = idx_str.substr(0, 6); }
+
             char time_buf[16];
             std::snprintf(time_buf, sizeof(time_buf), "%.6f", pkt.timestamp);
             std::string time_str(time_buf);
-            if (time_str.size() > 12) {
-                time_str = time_str.substr(0, 12);
-            }
-            
-            // IP addresses (max 15 chars, fits in width 18 - no truncation needed normally)
+            if (time_str.size() > 12) { time_str = time_str.substr(0, 12); }
+
             std::string src = fmt_ip(pkt.src_ip);
             std::string dst = fmt_ip(pkt.dst_ip);
-            
-            // Protocol name (width 6)
+
             std::string proto = proto_name(pkt.top_proto);
-            if (proto.size() > 6) {
-                proto = proto.substr(0, 6);
-            }
-            
-            // Length column (width variable, but ensure it doesn't overflow)
+            if (proto.size() > 6) { proto = proto.substr(0, 6); }
+
             char len_buf[16];
             std::snprintf(len_buf, sizeof(len_buf), "%u", pkt.length_orig);
             std::string len_str(len_buf);
-            // Limit length to reasonable width (e.g., 6 chars for up to 999999 bytes)
-            if (len_str.size() > 6) {
-                len_str = len_str.substr(0, 6);
-            }
+            if (len_str.size() > 6) { len_str = len_str.substr(0, 6); }
 
-            // Build the line with precise widths using left-alignment
             char line[512];
             std::snprintf(line, sizeof(line),
                         " %-6s %-12s %-18s %-18s %-6s %s",
-                        idx_str.c_str(),
-                        time_str.c_str(),
-                        src.c_str(),
-                        dst.c_str(),
-                        proto.c_str(),
-                        len_str.c_str());
+                        idx_str.c_str(), time_str.c_str(),
+                        src.c_str(), dst.c_str(),
+                        proto.c_str(), len_str.c_str());
 
             int attrs = color_for_proto(pkt.top_proto);
             if (is_selected) {
                 attrs = COLOR_PAIR(colors::SELECTED) | A_BOLD;
-                // Draw selection indicator
                 win_->print(row + 1, 0, ">", attrs);
-                // Adjust line to start after the '>' character
                 std::string line_without_arrow(line);
-                // Pad line to full width to highlight entire row when selected
-                while (static_cast<int>(line_without_arrow.size()) < w - 1) {
+                while (static_cast<int>(line_without_arrow.size()) < w - 1)
                     line_without_arrow += ' ';
-                }
                 line_without_arrow = line_without_arrow.substr(0, static_cast<size_t>(w - 1));
                 win_->print(row + 1, 1, line_without_arrow, attrs);
             } else {
-                // Pad line to full width to maintain consistent background
                 std::string line_str(line);
-                while (static_cast<int>(line_str.size()) < w) {
-                    line_str += ' ';
-                }
+                while (static_cast<int>(line_str.size()) < w) line_str += ' ';
                 line_str = line_str.substr(0, static_cast<size_t>(w));
                 win_->print(row + 1, 0, line_str, attrs);
             }
@@ -151,20 +123,17 @@ namespace pktlens {
                 if (sel + 1 < total) { model_.select(sel + 1); }
                 return true;
 
-            case KEY_PPAGE:  // Page Up
-            {
+            case KEY_PPAGE: {
                 int page = std::max(1, win_->height() - 2);
                 size_t new_sel = (sel > static_cast<size_t>(page))
-                            ? sel - static_cast<size_t>(page) : 0;
+                                 ? sel - static_cast<size_t>(page) : 0;
                 model_.select(new_sel);
                 return true;
             }
 
-            case KEY_NPAGE:  // Page Down
-            {
+            case KEY_NPAGE: {
                 int page = std::max(1, win_->height() - 2);
-                size_t new_sel = std::min(sel + static_cast<size_t>(page),
-                                        total - 1);
+                size_t new_sel = std::min(sel + static_cast<size_t>(page), total - 1);
                 model_.select(new_sel);
                 return true;
             }
@@ -199,4 +168,38 @@ namespace pktlens {
         }
     }
 
-}
+    // -------------------------------------------------------------------------
+    // Live-mode helpers (Step 7)
+    // -------------------------------------------------------------------------
+
+    bool PacketListPanel::is_at_bottom() const {
+        size_t total = model_.filtered_count();
+        if (total == 0) { return true; }
+
+        int visible = win_->height() - 1;
+        if (visible <= 0) { return true; }
+
+        // Bottom is reached when the last packet is visible in the window,
+        // i.e. scroll_offset_ + visible >= total.
+        return scroll_offset_ + static_cast<size_t>(visible) >= total;
+    }
+
+    void PacketListPanel::scroll_to_bottom() {
+        size_t total = model_.filtered_count();
+        if (total == 0) { return; }
+
+        // Select the last packet — scroll_to_selection() will pin scroll_offset_
+        // correctly on the next render() call.
+        model_.select(total - 1);
+
+        // Also update scroll_offset_ immediately so is_at_bottom() returns true
+        // right away (before the next render).
+        int visible = win_->height() - 1;
+        if (visible > 0 && total > static_cast<size_t>(visible)) {
+            scroll_offset_ = total - static_cast<size_t>(visible);
+        } else {
+            scroll_offset_ = 0;
+        }
+    }
+
+}  // namespace pktlens
