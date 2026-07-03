@@ -104,6 +104,7 @@ pktlens --help                # full key reference
 | `s` | Cycle sort field: time → size → protocol → time |
 | `r` | Reverse sort direction |
 | `h` | Toggle hex dump mode in detail panel |
+| `g/G` | Jump to earliest/latest packet and resume auto-scroll |
 | `w` | Export visible packets to a pcap file |
 | `q` | Quit |
 
@@ -112,7 +113,6 @@ pktlens --help                # full key reference
 | Key | Action |
 |-----|--------|
 | `Space` | Pause / resume the display (capture continues in background) |
-| `G` | Jump to latest packet and resume auto-scroll |
 
 Auto-scroll follows the packet stream automatically when the list is pinned to the bottom. Scrolling up pauses it; pressing `G` resumes it. The header shows `[+N new]` while you are reviewing older packets.
 

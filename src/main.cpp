@@ -60,9 +60,10 @@ int main(int argc, char* argv[])
             "  h         toggle hex dump\n"
             "  w         export visible packets to pcap file\n"
             "  q         quit\n\n"
+            "  g/G       jump to earliest/latest packet\n"
             "keys (live mode, additional):\n"
             "  Space     pause / resume display\n"
-            "  G         jump to latest packet, resume auto-scroll\n");
+            );
         return 0;
     }
 

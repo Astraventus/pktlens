@@ -397,9 +397,9 @@ static void render_status_bar(int rows, int cols, bool live_mode)
     const char* keys = live_mode
         ? " [Arrow Up/Arrow Down] navigate  [TAB] focus  [/] filter  "
           "[w] export  [Esc] clear  [s] sort  [r] reverse  "
-          "[h] hex  [Space] pause  [G] resume scroll  [q] quit"
+          "[h] hex  [Space] pause  [g/G] to first/last  [q] quit"
         : " [Arrow Up/Arrow Down] navigate  [TAB] focus  [/] filter  "
-          "[w] export  [Esc] clear  [s] sort  [r] reverse  [h] hex  [q] quit";
+          "[w] export  [Esc] clear  [s] sort  [r] reverse  [h] hex [g/G] to first/last  [q] quit";
 
     std::string bar(keys);
     while (static_cast<int>(bar.size()) < cols) { bar += ' '; }
